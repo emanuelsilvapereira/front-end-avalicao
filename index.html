@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso à Avaliação - SENAI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+
+    <div class="login-container fade-in">
+        <div class="login-header">
+            <div class="logo-area">
+                <h1>Avaliação SENAI</h1>
+                <p>Ambiente de Testes 2025</p>
+            </div>
+        </div>
+
+        <form id="login-form" class="login-form">
+            <div class="input-group">
+                <label for="student-name">Nome Completo</label>
+                <input type="text" id="student-name" placeholder="Ex: Lucas Martins" required>
+            </div>
+
+            <div class="input-group">
+                <label for="exam-code">Código da Prova (Link)</label>
+                <input type="text" id="exam-code" placeholder="Ex: PROVA-WEB-01" required>
+            </div>
+
+            <div class="login-actions">
+                <button type="submit" class="btn btn-primary btn-full">Iniciar Prova</button>
+            </div>
+            
+            <p class="login-footer">Ao iniciar, o cronômetro será ativado automaticamente.</p>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
