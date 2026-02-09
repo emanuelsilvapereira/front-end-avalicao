@@ -3,25 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="Sistema de Avaliação SENAI.">
+    <meta property="og:title" content="Avaliação Online - SENAI">
+    <meta property="og:image" content="logo.png">
+    <meta name="theme-color" content="#005caa">
+
     <title>Login - Avaliação SENAI</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 </head>
 <body class="login-body unselectable">
+    
     <div class="login-container fade-in">
+        <button id="theme-toggle" class="icon-btn login-theme-btn" title="Alternar Tema Escuro/Claro">
+            <span class="material-icons-round">dark_mode</span>
+        </button>
+
         <div class="login-header">
             <img src="logo.png" alt="Logo SENAI" class="senai-logo-login">
             <h1>Ambiente de Avaliação</h1>
             <p>Sistema Seguro de Provas Online</p>
         </div>
+
         <form id="login-form" class="login-form">
             <div class="input-group">
                 <label for="student-name">Nome Completo</label>
                 <div class="input-wrapper">
                     <span class="material-icons-round input-icon">person</span>
-                    <input type="text" id="student-name" placeholder="Digite seu nome" required>
+                    <input type="text" id="student-name" placeholder="Digite seu nome completo" required>
                 </div>
             </div>
+
             <div class="input-group">
                 <label for="exam-code">Código da Prova</label>
                 <div class="input-wrapper">
@@ -30,6 +43,7 @@
                 </div>
                 <small class="helper-text">Códigos disponíveis: <b>WEB-2025</b> ou <b>GERAL-2025</b></small>
             </div>
+
             <div class="login-actions">
                 <button type="submit" class="btn btn-primary btn-full">
                     Iniciar Prova <span class="material-icons-round">arrow_forward</span>
@@ -37,6 +51,7 @@
             </div>
         </form>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

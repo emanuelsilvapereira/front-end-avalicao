@@ -1,344 +1,265 @@
-/* --- BANCO DE DADOS SIMULADO --- */
+/* --- DADOS DAS PROVAS --- */
 const bancosDeProvas = {
     "WEB-2025": [
-        { id: 1, disciplina: "HTML5", pergunta: "Qual elemento HTML é o contêiner correto para metadados de uma página (como título e links de CSS)?", opcoes: ["<body>", "<head>", "<meta>", "<header>"], correta: "B" },
-        { id: 2, disciplina: "CSS3", pergunta: "No CSS, como você selecionaria todos os elementos <p> que estão dentro de uma <div>?", opcoes: ["div + p", "div > p", "div p", "div ~ p"], correta: "C" },
-        { id: 3, disciplina: "JavaScript", pergunta: "Qual método é usado para converter um objeto JavaScript em uma string JSON?", opcoes: ["JSON.parse()", "JSON.toString()", "JSON.stringify()", "Object.toJSON()"], correta: "C" }
+        { id: 1, disciplina: "HTML5", pergunta: "Qual elemento HTML é o contêiner correto para metadados de uma página?", opcoes: ["<body>", "<head>", "<meta>", "<header>"], correta: "B", explicacao: "O <head> contém metadados, título e scripts." },
+        { id: 2, disciplina: "CSS3", pergunta: "No CSS, como selecionar todos os elementos <p> dentro de uma <div>?", opcoes: ["div + p", "div > p", "div p", "div ~ p"], correta: "C", explicacao: "O seletor de descendente (espaço) pega todos os itens dentro." },
+        { id: 3, disciplina: "JavaScript", pergunta: "Qual comando exibe uma mensagem no console?", opcoes: ["console.print()", "console.log()", "print()", "echo()"], correta: "B", explicacao: "console.log() é o método padrão para depuração." }
     ],
     "GERAL-2025": [
-        { 
-            id: 1, 
-            disciplina: "Geografia", 
-            pergunta: "Observe o mapa. O ponto vermelho indica a localização aproximada de qual capital brasileira?", 
-            imagem: "https://st.depositphotos.com/1001526/4882/i/950/depositphotos_48823277-stock-photo-map-of-brasilia-brazil.jpg", 
-            opcoes: ["Rio de Janeiro", "Salvador", "Brasília", "Manaus"], 
-            correta: "C" 
-        },
-        { id: 2, disciplina: "História", pergunta: "Em que ano o homem pisou na Lua?", opcoes: ["1959", "1969", "1979", "1989"], correta: "B" },
-        { id: 3, disciplina: "Tecnologia", pergunta: "O que significa a sigla 'CPU' em um computador?", opcoes: ["Central Process Unit", "Computer Personal Unit", "Central Power Unit", "Control Process Unit"], correta: "A" }
+        { id: 1, disciplina: "Geografia", pergunta: "O ponto vermelho indica qual capital?", imagem: "https://pt.wikipedia.org/wiki/Distrito_Federal_%28Brasil%29", opcoes: ["Rio de Janeiro", "Salvador", "Brasília", "Manaus"], correta: "C", explicacao: "Brasília é a capital federal." }
     ]
 };
 
-// Configuração do tempo de prova em minutos
-const TEMPO_PROVA_MINUTOS = 15; 
-
-// --- ESTADO DA APLICAÇÃO ---
+const TEMPO_PROVA_MIN = 15;
 let provaAtual = [];
 let indiceQuestao = 0;
-let respostasSalvas = {};
-let questoesParaRevisar = new Set();
-let contadorInfracoes = 0;
+let respostas = {};
+let revisao = new Set();
 let timerInterval;
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Aplica tema salvo
     if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        if(localStorage.getItem('prova_ativa') === 'true') {
-            window.location.href = 'prova.html';
-        }
-        loginForm.addEventListener('submit', realizarLogin);
-    }
+    // Configura botão de tema (serve para Login e Prova)
+    const toggleBtns = document.querySelectorAll('#theme-toggle, #theme-toggle-exam');
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+    });
 
-    const questionContainer = document.getElementById('question-container');
-    if (questionContainer) {
-        verificarAutenticacao();
-        inicializarProva();
-        configurarEventosUI();
-        ativarSeguranca();
-    }
+    if (document.getElementById('login-form')) initLogin();
+    if (document.getElementById('real-content')) initProva();
 });
 
-/* --- FUNÇÕES DE LOGIN --- */
-function realizarLogin(e) {
-    e.preventDefault();
-    const nomeInput = document.getElementById('student-name');
-    const codigoInput = document.getElementById('exam-code');
-    
-    const nome = nomeInput.value.trim();
-    const codigo = codigoInput.value.toUpperCase().trim();
+// --- LÓGICA DE LOGIN ---
+function initLogin() {
+    localStorage.removeItem('prova_ativa');
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const codigo = document.getElementById('exam-code').value.toUpperCase().trim();
+        const nome = document.getElementById('student-name').value.trim();
 
-    if (!nome) { alert("Por favor, insira seu nome."); return; }
-    
-    if (!bancosDeProvas[codigo]) {
-        alert("Código de prova não encontrado. Tente 'WEB-2025' ou 'GERAL-2025'.");
-        return;
-    }
+        if (!bancosDeProvas[codigo]) { alert("Código inválido! Tente: WEB-2025"); return; }
 
-    localStorage.setItem('aluno_nome', nome);
-    localStorage.setItem('prova_codigo', codigo);
-    localStorage.setItem('prova_ativa', 'true');
-    localStorage.removeItem('respostas_usuario');
-    localStorage.removeItem('revisoes_usuario');
-    localStorage.removeItem('tempo_fim_prova');
-
-    window.location.href = 'prova.html';
+        localStorage.setItem('aluno_nome', nome);
+        localStorage.setItem('prova_codigo', codigo);
+        localStorage.setItem('prova_ativa', 'true');
+        localStorage.removeItem('respostas');
+        localStorage.removeItem('tempo_fim');
+        window.location.href = 'prova.html';
+    });
 }
 
-/* --- CORE DA PROVA --- */
-function verificarAutenticacao() {
-    if(localStorage.getItem('prova_ativa') !== 'true') {
-        alert("Sessão expirada. Faça login novamente.");
-        window.location.href = 'index.html';
-    }
-}
+// --- LÓGICA DA PROVA ---
+function initProva() {
+    if(localStorage.getItem('prova_ativa') !== 'true') { window.location.href = 'index.html'; return; }
 
-function inicializarProva() {
     const codigo = localStorage.getItem('prova_codigo');
-    document.getElementById('user-name-display').textContent = localStorage.getItem('aluno_nome') || 'Estudante';
-    
     provaAtual = bancosDeProvas[codigo];
-    respostasSalvas = JSON.parse(localStorage.getItem('respostas_usuario')) || {};
-    const revisoesArray = JSON.parse(localStorage.getItem('revisoes_usuario')) || [];
-    questoesParaRevisar = new Set(revisoesArray);
+    respostas = JSON.parse(localStorage.getItem('respostas')) || {};
+    
+    document.getElementById('user-name').textContent = localStorage.getItem('aluno_nome');
+    
+    // Skeleton Animation
+    document.getElementById('real-content').style.display = 'none';
+    document.getElementById('skeleton-screen').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('skeleton-screen').style.display = 'none';
+        document.getElementById('real-content').style.display = 'block';
+    }, 800);
 
-    gerarSidebar();
-    carregarQuestaoNaTela();
-    gerenciarCronometroPersistente();
+    configurarTimer();
+    renderizarQuestao();
+    gerarNavegacao();
+    configurarEventosProva();
 }
 
-// Função auxiliar para escapar caracteres HTML (CORREÇÃO DO BUG)
-function escaparHTML(texto) {
-    return texto
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+// Escapa HTML para evitar bugs com tags <head> etc.
+function escaparHTML(str) {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function carregarQuestaoNaTela() {
-    const questao = provaAtual[indiceQuestao];
+function renderizarQuestao() {
+    const q = provaAtual[indiceQuestao];
+    document.getElementById('q-badge').textContent = q.disciplina;
+    document.getElementById('q-title').textContent = `Questão ${indiceQuestao + 1}`;
+    document.getElementById('q-text').textContent = q.pergunta;
+
+    const imgArea = document.getElementById('q-image-area');
+    if(q.imagem) {
+        document.getElementById('q-image').src = q.imagem;
+        imgArea.style.display = 'block';
+    } else { imgArea.style.display = 'none'; }
     
-    document.getElementById('q-discipline').textContent = questao.disciplina;
-    document.getElementById('q-number').textContent = `Questão ${indiceQuestao + 1} de ${provaAtual.length}`;
-    document.getElementById('q-text').textContent = questao.pergunta;
+    const container = document.getElementById('options-box');
+    container.innerHTML = '';
 
-    const imgContainer = document.getElementById('q-image-area');
-    const imgTag = document.getElementById('q-image');
-    if(questao.imagem) {
-        imgTag.src = questao.imagem;
-        imgContainer.style.display = 'block';
-    } else {
-        imgContainer.style.display = 'none';
-    }
-
-    const btnReview = document.getElementById('btn-review');
-    btnReview.classList.toggle('active', questoesParaRevisar.has(indiceQuestao));
-
-    const optionsContainer = document.getElementById('options-container');
-    optionsContainer.innerHTML = '';
-    
-    questao.opcoes.forEach((textoOpcao, index) => {
-        const letra = String.fromCharCode(65 + index);
-        const estaMarcada = respostasSalvas[indiceQuestao] === letra;
+    q.opcoes.forEach((texto, i) => {
+        const letra = String.fromCharCode(65 + i);
+        const checked = respostas[indiceQuestao] === letra ? 'checked' : '';
         
-        // AQUI ESTÁ A MÁGICA: escaparHTML(textoOpcao)
-        optionsContainer.innerHTML += `
-            <div class="option-item">
-                <input type="radio" name="opcao_questao" id="opt-${index}" value="${letra}" ${estaMarcada ? 'checked' : ''}>
-                <label class="option-label" for="opt-${index}">
-                    <div class="radio-circle"></div>
-                    <span style="font-weight: 600; margin-right: 8px;">${letra})</span>
-                    <span>${escaparHTML(textoOpcao)}</span> 
+        container.innerHTML += `
+            <div class="option-wrapper">
+                <input type="radio" name="opcao" id="opt-${i}" class="option-input" value="${letra}" ${checked} onchange="salvar('${letra}')">
+                <label class="option-label" for="opt-${i}">
+                    <div class="circle"></div>
+                    <strong>${letra})</strong>&nbsp; ${escaparHTML(texto)}
                 </label>
             </div>
         `;
     });
 
-    document.querySelectorAll('input[name="opcao_questao"]').forEach(input => {
-        input.addEventListener('change', (e) => salvarResposta(e.target.value));
-    });
+    document.getElementById('btn-prev').disabled = indiceQuestao === 0;
+    const isLast = indiceQuestao === provaAtual.length - 1;
+    document.getElementById('btn-next').style.display = isLast ? 'none' : 'block';
+    document.getElementById('btn-finish').style.display = isLast ? 'block' : 'none';
 
-    atualizarBotoesNavegacao();
-    atualizarSidebarStatus();
-}
-
-function salvarResposta(letra) {
-    respostasSalvas[indiceQuestao] = letra;
-    localStorage.setItem('respostas_usuario', JSON.stringify(respostasSalvas));
-    atualizarSidebarStatus();
-    atualizarBarraProgresso();
-}
-
-function limparRespostaAtual() {
-    delete respostasSalvas[indiceQuestao];
-    localStorage.setItem('respostas_usuario', JSON.stringify(respostasSalvas));
-    const inputs = document.querySelectorAll('input[name="opcao_questao"]');
-    inputs.forEach(input => input.checked = false);
-    atualizarSidebarStatus();
-    atualizarBarraProgresso();
-}
-
-function alternarRevisao() {
-    if(questoesParaRevisar.has(indiceQuestao)) {
-        questoesParaRevisar.delete(indiceQuestao);
+    const btnRev = document.getElementById('btn-review');
+    if(revisao.has(indiceQuestao)) {
+        btnRev.classList.add('active');
+        btnRev.innerHTML = '<span class="material-icons-round">flag</span> Revisar (Marcado)';
     } else {
-        questoesParaRevisar.add(indiceQuestao);
+        btnRev.classList.remove('active');
+        btnRev.innerHTML = '<span class="material-icons-round">flag</span> Revisar';
     }
-    localStorage.setItem('revisoes_usuario', JSON.stringify([...questoesParaRevisar]));
-    document.getElementById('btn-review').classList.toggle('active');
-    atualizarSidebarStatus();
+    atualizarSidebar();
 }
 
-function atualizarBotoesNavegacao() {
-    const btnPrev = document.getElementById('btn-prev');
-    const btnNext = document.getElementById('btn-next');
-    const btnFinish = document.getElementById('btn-finish');
-
-    btnPrev.disabled = indiceQuestao === 0;
-    const ehUltima = indiceQuestao === provaAtual.length - 1;
-    btnNext.style.display = ehUltima ? 'none' : 'flex';
-    btnFinish.style.display = ehUltima ? 'flex' : 'none';
+function salvar(letra) {
+    respostas[indiceQuestao] = letra;
+    localStorage.setItem('respostas', JSON.stringify(respostas));
+    atualizarSidebar();
 }
 
-function navegar(direcao) {
-    if(direcao === 'proximo' && indiceQuestao < provaAtual.length - 1) {
-        indiceQuestao++;
-    } else if (direcao === 'anterior' && indiceQuestao > 0) {
-        indiceQuestao--;
-    }
-    carregarQuestaoNaTela();
-    fecharSidebarMobile();
-}
-
-function gerarSidebar() {
-    const navContainer = document.getElementById('question-nav');
-    navContainer.innerHTML = '';
-    provaAtual.forEach((_, index) => {
+function gerarNavegacao() {
+    const grid = document.getElementById('nav-grid');
+    grid.innerHTML = '';
+    provaAtual.forEach((_, i) => {
         const btn = document.createElement('button');
-        btn.className = 'q-btn';
-        btn.textContent = index + 1;
-        btn.onclick = () => {
-            indiceQuestao = index;
-            carregarQuestaoNaTela();
-            fecharSidebarMobile();
-        }
-        navContainer.appendChild(btn);
+        btn.className = 'q-nav-btn';
+        btn.textContent = i + 1;
+        btn.onclick = () => { indiceQuestao = i; renderizarQuestao(); };
+        grid.appendChild(btn);
+    });
+    atualizarSidebar();
+}
+
+function atualizarSidebar() {
+    document.querySelectorAll('.q-nav-btn').forEach((btn, i) => {
+        btn.className = 'q-nav-btn';
+        if(i === indiceQuestao) btn.classList.add('active');
+        if(respostas[i]) btn.classList.add('answered');
+        if(revisao.has(i)) btn.classList.add('review');
     });
 }
 
-function atualizarSidebarStatus() {
-    const btns = document.querySelectorAll('.q-btn');
-    btns.forEach((btn, index) => {
-        btn.className = 'q-btn';
-        if(index === indiceQuestao) btn.classList.add('active');
-        if(respostasSalvas[index]) btn.classList.add('answered');
-        if(questoesParaRevisar.has(index)) btn.classList.add('review');
-    });
-}
-
-function atualizarBarraProgresso() {
-    const total = provaAtual.length;
-    const respondidas = Object.keys(respostasSalvas).length;
-    const porcentagem = (respondidas / total) * 100;
-    document.getElementById('progress-bar').style.width = `${porcentagem}%`;
-}
-
-function configurarEventosUI() {
-    document.getElementById('btn-prev').onclick = () => navegar('anterior');
-    document.getElementById('btn-next').onclick = () => navegar('proximo');
-    document.getElementById('btn-clear').onclick = limparRespostaAtual;
-    document.getElementById('btn-review').onclick = alternarRevisao;
-    document.getElementById('btn-finish').onclick = confirmarFinalizacao;
-
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    document.getElementById('menu-toggle').onclick = () => {
-        sidebar.classList.add('open');
-        overlay.classList.add('active');
-    };
-    document.getElementById('close-menu').onclick = fecharSidebarMobile;
-    overlay.onclick = fecharSidebarMobile;
-
-    document.getElementById('theme-toggle').onclick = () => {
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-    };
-}
-
-function fecharSidebarMobile() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').classList.remove('active');
-}
-
-function gerenciarCronometroPersistente() {
-    const timerDisplay = document.getElementById('timer-display');
-    const timerBox = document.getElementById('timer-box');
-    let tempoFim = localStorage.getItem('tempo_fim_prova');
-
-    if (!tempoFim) {
-        const agora = new Date().getTime();
-        tempoFim = agora + (TEMPO_PROVA_MINUTOS * 60 * 1000);
-        localStorage.setItem('tempo_fim_prova', tempoFim);
+function configurarTimer() {
+    const display = document.getElementById('timer');
+    let fim = localStorage.getItem('tempo_fim');
+    if(!fim) {
+        fim = new Date().getTime() + TEMPO_PROVA_MIN * 60000;
+        localStorage.setItem('tempo_fim', fim);
     }
-
     timerInterval = setInterval(() => {
-        const agora = new Date().getTime();
-        const tempoRestante = tempoFim - agora;
-
-        if (tempoRestante <= 0) {
-            clearInterval(timerInterval);
-            timerDisplay.textContent = "00:00";
-            timerBox.classList.add('urgent');
-            alert("O tempo da prova acabou! Suas respostas serão enviadas.");
-            finalizarProva();
-            return;
-        }
-
-        const minutos = Math.floor((tempoRestante % (1000 * 60 * 60)) / (1000 * 60));
-        const segundos = Math.floor((tempoRestante % (1000 * 60)) / 1000);
-        timerDisplay.textContent = `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
-
-        if (minutos < 2) {
-            timerBox.classList.add('urgent');
-        }
+        const resto = fim - new Date().getTime();
+        if(resto <= 0) { clearInterval(timerInterval); finalizar(); return; }
+        const m = Math.floor(resto / 60000);
+        const s = Math.floor((resto % 60000) / 1000);
+        display.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        if(m < 2) document.querySelector('.timer-badge').classList.add('urgent');
     }, 1000);
 }
 
-function ativarSeguranca() {
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            contadorInfracoes++;
-            document.title = `⚠️ ALERTA (${contadorInfracoes}) - Retorne à prova!`;
-        } else {
-            document.title = "Realizando Prova - SENAI";
-        }
-    });
-    document.addEventListener('contextmenu', e => e.preventDefault());
+function configurarEventosProva() {
+    document.getElementById('btn-next').onclick = () => { indiceQuestao++; renderizarQuestao(); };
+    document.getElementById('btn-prev').onclick = () => { indiceQuestao--; renderizarQuestao(); };
+    document.getElementById('btn-clear').onclick = () => { delete respostas[indiceQuestao]; salvar(null); renderizarQuestao(); };
+    document.getElementById('btn-review').onclick = () => {
+        if(revisao.has(indiceQuestao)) revisao.delete(indiceQuestao);
+        else revisao.add(indiceQuestao);
+        renderizarQuestao();
+    };
+    document.getElementById('btn-finish').onclick = finalizar;
+    
+    document.getElementById('focus-mode-toggle').onclick = () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+    };
+    
+    const sidebar = document.querySelector('.sidebar');
+    document.getElementById('menu-toggle').onclick = () => sidebar.classList.add('open');
+    document.getElementById('close-menu').onclick = () => sidebar.classList.remove('open');
 }
 
-function confirmarFinalizacao() {
-    const total = provaAtual.length;
-    const respondidas = Object.keys(respostasSalvas).length;
-    if(respondidas < total) {
-        if(!confirm(`Atenção: Você respondeu ${respondidas} de ${total} questões.\nDeseja realmente finalizar?`)) {
-            return;
-        }
-    }
-    finalizarProva();
-}
-
-function finalizarProva() {
+function finalizar() {
     clearInterval(timerInterval);
-    localStorage.setItem('prova_ativa', 'false');
-
+    localStorage.removeItem('prova_ativa');
+    
     let acertos = 0;
-    provaAtual.forEach((questao, index) => {
-        if(respostasSalvas[index] === questao.correta) {
-            acertos++;
-        }
+    let feedback = '';
+    
+    provaAtual.forEach((q, i) => {
+        const userResp = respostas[i];
+        const ok = userResp === q.correta;
+        if(ok) acertos++;
+        feedback += `<div class="fb-item ${ok ? 'correct' : 'wrong'}">
+            <strong>Q${i+1}:</strong> ${ok ? 'Correto!' : `Errou (Sua: ${userResp||'-'} | Certa: ${q.correta})`}<br>
+            <small>${q.explicacao || ''}</small>
+        </div>`;
     });
 
-    document.getElementById('score-number').textContent = `${acertos}/${provaAtual.length}`;
-    document.getElementById('cheat-count').textContent = contadorInfracoes;
+    document.getElementById('final-score').textContent = `${acertos} / ${provaAtual.length}`;
+    document.getElementById('feedback-area').innerHTML = feedback;
+    document.getElementById('msg-resultado').textContent = acertos >= provaAtual.length/2 ? "Aprovado!" : "Reprovado";
     document.getElementById('modal-resultado').style.display = 'flex';
+
+    if(acertos >= provaAtual.length/2) {
+        document.getElementById('btn-download-pdf').style.display = 'block';
+    }
+
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Acertos', 'Erros'],
+            datasets: [{ data: [acertos, provaAtual.length - acertos], backgroundColor: ['#10b981', '#ef4444'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
 }
 
-function sairDoSistema() {
-    localStorage.removeItem('prova_ativa');
-    localStorage.removeItem('tempo_fim_prova');
+// --- GERAÇÃO DE PDF ---
+function gerarCertificado() {
+    const nome = localStorage.getItem('aluno_nome');
+    const curso = localStorage.getItem('prova_codigo');
+    const nota = document.getElementById('final-score').textContent;
+    
+    document.getElementById('cert-name').textContent = nome.toUpperCase();
+    document.getElementById('cert-course').textContent = curso;
+    document.getElementById('cert-score').textContent = nota;
+    document.getElementById('cert-date').textContent = new Date().toLocaleDateString('pt-BR');
+    
+    const element = document.getElementById('certificate-template');
+    element.style.display = 'block';
+    
+    const opt = {
+        margin: 10,
+        filename: `Certificado_${nome.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 4, useCORS: true }, // Escala 4 para alta qualidade
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        element.style.display = 'none';
+    });
+}
+
+function sair() {
+    localStorage.clear();
     window.location.href = 'index.html';
 }
