@@ -2,11 +2,11 @@
 const bancosDeProvas = {
     "WEB-2025": [
         { id: 1, disciplina: "HTML5", pergunta: "Qual elemento HTML é o contêiner correto para metadados de uma página?", opcoes: ["<body>", "<head>", "<meta>", "<header>"], correta: "B", explicacao: "O <head> contém metadados, título e scripts." },
-        { id: 2, disciplina: "CSS3", pergunta: "No CSS, como selecionar todos os elementos <p> dentro de uma <div>?", opcoes: ["div + p", "div > p", "div p", "div ~ p"], correta: "C", explicacao: "O seletor de descendente (espaço) pega todos os itens dentro." },
+        { id: 2, disciplina: "CSS3", pergunta: "No CSS, como selecionar todos os elementos <p> dentro de uma <div>?", opcoes: ["div + p", "div > p", "div p", "div ~ p"], correta: "C", explicacao: "'div p' seleciona todos os descendentes p dentro de div." },
         { id: 3, disciplina: "JavaScript", pergunta: "Qual comando exibe uma mensagem no console?", opcoes: ["console.print()", "console.log()", "print()", "echo()"], correta: "B", explicacao: "console.log() é o método padrão para depuração." }
     ],
     "GERAL-2025": [
-        { id: 1, disciplina: "Geografia", pergunta: "O ponto vermelho indica qual capital?", imagem: "https://pt.wikipedia.org/wiki/Distrito_Federal_%28Brasil%29", opcoes: ["Rio de Janeiro", "Salvador", "Brasília", "Manaus"], correta: "C", explicacao: "Brasília é a capital federal." }
+        { id: 1, disciplina: "Geografia", pergunta: "O ponto vermelho indica qual capital?", imagem: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Map_of_Brazil_with_flag.svg/250px-Map_of_Brazil_with_flag.svg.png", opcoes: ["Rio de Janeiro", "Salvador", "Brasília", "Manaus"], correta: "C", explicacao: "Brasília é a capital federal." }
     ]
 };
 
@@ -19,11 +19,9 @@ let timerInterval;
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Aplica tema salvo
     if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
-    // Configura botão de tema (serve para Login e Prova)
-    const toggleBtns = document.querySelectorAll('#theme-toggle, #theme-toggle-exam');
+    const toggleBtns = document.querySelectorAll('#theme-toggle, #theme-toggle-exam, .login-theme-btn');
     toggleBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
@@ -35,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('real-content')) initProva();
 });
 
-// --- LÓGICA DE LOGIN ---
+// --- LOGIN ---
 function initLogin() {
     localStorage.removeItem('prova_ativa');
     document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -54,7 +52,7 @@ function initLogin() {
     });
 }
 
-// --- LÓGICA DA PROVA ---
+// --- PROVA ---
 function initProva() {
     if(localStorage.getItem('prova_ativa') !== 'true') { window.location.href = 'index.html'; return; }
 
@@ -64,7 +62,6 @@ function initProva() {
     
     document.getElementById('user-name').textContent = localStorage.getItem('aluno_nome');
     
-    // Skeleton Animation
     document.getElementById('real-content').style.display = 'none';
     document.getElementById('skeleton-screen').style.display = 'block';
     setTimeout(() => {
@@ -78,7 +75,6 @@ function initProva() {
     configurarEventosProva();
 }
 
-// Escapa HTML para evitar bugs com tags <head> etc.
 function escaparHTML(str) {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -183,7 +179,9 @@ function configurarEventosProva() {
         else revisao.add(indiceQuestao);
         renderizarQuestao();
     };
-    document.getElementById('btn-finish').onclick = finalizar;
+    
+    // CORREÇÃO AQUI: Chama a função de confirmação
+    document.getElementById('btn-finish').onclick = confirmarFinalizacao;
     
     document.getElementById('focus-mode-toggle').onclick = () => {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -193,6 +191,19 @@ function configurarEventosProva() {
     const sidebar = document.querySelector('.sidebar');
     document.getElementById('menu-toggle').onclick = () => sidebar.classList.add('open');
     document.getElementById('close-menu').onclick = () => sidebar.classList.remove('open');
+}
+
+function confirmarFinalizacao() {
+    const respondidas = Object.values(respostas).filter(r => r).length;
+    const total = provaAtual.length;
+
+    if (respondidas < total) {
+        const faltam = total - respondidas;
+        if (!confirm(`Atenção: Você ainda tem ${faltam} questão(ões) em branco.\nDeseja realmente finalizar a prova?`)) {
+            return;
+        }
+    }
+    finalizar();
 }
 
 function finalizar() {
@@ -232,7 +243,6 @@ function finalizar() {
     });
 }
 
-// --- GERAÇÃO DE PDF ---
 function gerarCertificado() {
     const nome = localStorage.getItem('aluno_nome');
     const curso = localStorage.getItem('prova_codigo');
@@ -244,13 +254,13 @@ function gerarCertificado() {
     document.getElementById('cert-date').textContent = new Date().toLocaleDateString('pt-BR');
     
     const element = document.getElementById('certificate-template');
-    element.style.display = 'block';
+    element.style.display = 'flex'; 
     
     const opt = {
         margin: 10,
-        filename: `Certificado_${nome.replace(/\s+/g, '_')}.pdf`,
+        filename: `Certificado_SENAI_${nome.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 4, useCORS: true }, // Escala 4 para alta qualidade
+        html2canvas: { scale: 2, useCORS: true }, 
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
 

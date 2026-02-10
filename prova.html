@@ -20,7 +20,7 @@
         </div>
 
         <div class="header-controls">
-            <button id="focus-mode-toggle" class="icon-btn desktop-only" title="Modo Foco (Tela Cheia)">
+            <button id="focus-mode-toggle" class="icon-btn desktop-only" title="Modo Foco">
                 <span class="material-icons-round">fullscreen</span>
             </button>
 
@@ -90,8 +90,7 @@
 
                 <div id="q-text" class="q-text">Carregando pergunta...</div>
 
-                <div id="options-box" class="options-container">
-                    </div>
+                <div id="options-box" class="options-container"></div>
 
                 <div class="card-footer">
                     <button id="btn-clear" class="btn btn-ghost">Limpar Resposta</button>
@@ -132,31 +131,27 @@
     </div>
 
     <div id="certificate-template" style="display: none;">
-        <div style="padding: 40px; text-align: center; font-family: 'Georgia', serif; height: 100%; background: #fff; color: #000; position: relative;">
+        <div class="cert-border-outer"></div>
+        <div class="cert-border-inner"></div>
+
+        <div class="cert-content">
+            <img src="logo.png" class="cert-logo" alt="SENAI">
             
-            <div style="position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; border: 5px double #005caa;"></div>
-            <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px; border: 1px solid #004a8d;"></div>
-
-            <div style="padding: 40px;">
-                <img src="logo.png" style="width: 180px; margin-bottom: 30px;">
-                
-                <h1 style="color: #005caa; font-size: 36px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">Certificado de Conclusão</h1>
-                
-                <p style="font-size: 18px; color: #555; margin-top: 30px;">Certificamos que</p>
-                
-                <h2 id="cert-name" style="font-size: 32px; margin: 20px 0; border-bottom: 2px solid #ccc; display: inline-block; padding: 0 20px;">NOME DO ALUNO</h2>
-                
-                <p style="font-size: 18px; color: #555; margin-top: 20px;">Concluiu com êxito a avaliação técnica de:</p>
-                <h3 id="cert-course" style="font-size: 24px; color: #333;">CURSO</h3>
-                
-                <div style="margin-top: 40px; font-size: 16px;">
-                    <p>Nota Final: <b id="cert-score" style="color: #005caa; font-size: 20px;">10</b></p>
-                    <p id="cert-date" style="color: #777;">Data</p>
-                </div>
-
-                <div style="margin-top: 60px; font-size: 12px; color: #999;">
+            <h1 class="cert-title">Certificado de Conclusão</h1>
+            
+            <p class="cert-text">Certificamos que</p>
+            
+            <div class="cert-name" id="cert-name">NOME DO ALUNO</div>
+            
+            <p class="cert-text">Concluiu com êxito a avaliação técnica de:</p>
+            <h2 class="cert-course" id="cert-course">CURSO</h2>
+            
+            <div class="cert-footer">
+                <p>Nota Final: <span class="cert-score" id="cert-score">10</span></p>
+                <p id="cert-date">Data</p>
+                <p style="margin-top: 10px; font-size: 9pt; color: #999;">
                     Autenticado digitalmente pelo Sistema de Avaliação SENAI
-                </div>
+                </p>
             </div>
         </div>
     </div>
