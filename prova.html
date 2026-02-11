@@ -9,6 +9,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body class="unselectable">
 
@@ -20,7 +21,7 @@
         </div>
 
         <div class="header-controls">
-            <button id="focus-mode-toggle" class="icon-btn desktop-only" title="Modo Foco">
+            <button id="focus-mode-toggle" class="icon-btn desktop-only" title="Modo Foco [F11]">
                 <span class="material-icons-round">fullscreen</span>
             </button>
 
@@ -47,7 +48,7 @@
             </div>
 
             <div class="sidebar-section">
-                <span class="sidebar-label">Navegação</span>
+                <span class="sidebar-label">Navegação [Setas]</span>
                 <div class="question-grid" id="nav-grid"></div>
             </div>
 
@@ -96,13 +97,28 @@
                     <button id="btn-clear" class="btn btn-ghost">Limpar Resposta</button>
                     
                     <div class="btn-group">
-                        <button id="btn-prev" class="btn btn-outline">Anterior</button>
-                        <button id="btn-next" class="btn btn-primary">Próxima</button>
+                        <button id="btn-prev" class="btn btn-outline" title="Atalho: Seta Esquerda">Anterior</button>
+                        <button id="btn-next" class="btn btn-primary" title="Atalho: Seta Direita">Próxima</button>
                         <button id="btn-finish" class="btn btn-primary" style="display:none; background:var(--success)">Finalizar</button>
                     </div>
                 </div>
             </div>
         </main>
+    </div>
+
+    <div id="modal-aviso" class="modal-overlay" style="display: none; z-index: 200;">
+        <div class="modal-content fade-in" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 15px;">
+                <span class="material-icons-round" style="font-size: 3rem; color: var(--warning);">warning_amber</span>
+            </div>
+            <h3>Atenção!</h3>
+            <p id="aviso-texto" style="margin: 15px 0; color: var(--text-light);">Você tem questões sem responder.</p>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-outline" style="flex:1" onclick="fecharModalAviso()">Voltar</button>
+                <button class="btn btn-primary" style="flex:1" onclick="confirmarEFinalizar()">Finalizar mesmo assim</button>
+            </div>
+        </div>
     </div>
 
     <div id="modal-resultado" class="modal-overlay" style="display: none;">
@@ -133,19 +149,13 @@
     <div id="certificate-template" style="display: none;">
         <div class="cert-border-outer"></div>
         <div class="cert-border-inner"></div>
-
         <div class="cert-content">
             <img src="logo.png" class="cert-logo" alt="SENAI">
-            
             <h1 class="cert-title">Certificado de Conclusão</h1>
-            
             <p class="cert-text">Certificamos que</p>
-            
             <div class="cert-name" id="cert-name">NOME DO ALUNO</div>
-            
             <p class="cert-text">Concluiu com êxito a avaliação técnica de:</p>
             <h2 class="cert-course" id="cert-course">CURSO</h2>
-            
             <div class="cert-footer">
                 <p>Nota Final: <span class="cert-score" id="cert-score">10</span></p>
                 <p id="cert-date">Data</p>

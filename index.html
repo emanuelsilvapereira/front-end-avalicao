@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <meta name="description" content="Sistema de Avaliação SENAI.">
-    <meta property="og:title" content="Avaliação Online - SENAI">
-    <meta property="og:image" content="logo.png">
     <meta name="theme-color" content="#005caa">
 
     <title>Login - Avaliação SENAI</title>
@@ -23,7 +20,7 @@
         <div class="login-header">
             <img src="logo.png" alt="Logo SENAI" class="senai-logo-login">
             <h1>Ambiente de Avaliação</h1>
-            <p>Sistema Seguro de Provas Online</p>
+            <p>Selecione sua prova para iniciar</p>
         </div>
 
         <form id="login-form" class="login-form">
@@ -36,17 +33,43 @@
             </div>
 
             <div class="input-group">
-                <label for="exam-code">Código da Prova</label>
-                <div class="input-wrapper">
-                    <span class="material-icons-round input-icon">vpn_key</span>
-                    <input type="text" id="exam-code" placeholder="Ex: WEB-2025" required style="text-transform: uppercase;">
+                <label>Prova Disponível</label>
+                <div class="exam-selection-grid">
+                    
+                    <div class="exam-card selected" onclick="selecionarProva(this, 'WEB-2025')">
+                        <span class="material-icons-round exam-icon">code</span>
+                        <div class="exam-info">
+                            <strong>Front-End</strong>
+                            <small>HTML, CSS, JS</small>
+                        </div>
+                        <span class="material-icons-round check-icon">check_circle</span>
+                    </div>
+
+                    <div class="exam-card" onclick="selecionarProva(this, 'GERAL-2025')">
+                        <span class="material-icons-round exam-icon">public</span>
+                        <div class="exam-info">
+                            <strong>Gerais</strong>
+                            <small>Geo, Hist, Ciências</small>
+                        </div>
+                        <span class="material-icons-round check-icon">check_circle</span>
+                    </div>
+
+                    <div class="exam-card" onclick="selecionarProva(this, 'LOGICA-2025')">
+                        <span class="material-icons-round exam-icon">psychology</span>
+                        <div class="exam-info">
+                            <strong>Lógica</strong>
+                            <small>Algoritmos</small>
+                        </div>
+                        <span class="material-icons-round check-icon">check_circle</span>
+                    </div>
+
                 </div>
-                <small class="helper-text">Códigos disponíveis: <b>WEB-2025</b> ou <b>GERAL-2025</b></small>
+                <input type="hidden" id="selected-exam-code" value="WEB-2025">
             </div>
 
             <div class="login-actions">
                 <button type="submit" class="btn btn-primary btn-full">
-                    Iniciar Prova <span class="material-icons-round">arrow_forward</span>
+                    Iniciar Avaliação <span class="material-icons-round">arrow_forward</span>
                 </button>
             </div>
         </form>
